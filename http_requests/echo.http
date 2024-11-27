@@ -1,0 +1,6 @@
+POST http://localhost:8000/echo/
+Content-Type: application/json
+
+{
+  "test": "test 1 test 2 3 4"
+}
