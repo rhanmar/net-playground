@@ -41,5 +41,5 @@ func main() {
 	r.Post("/echo/", handlerEcho)
 	r.Get("/long/", handlerLong)
 	r.Get("/user/", handlerUserInfo)
-	log.Fatal(http.ListenAndServe(":8000", r))
+	log.Fatal(http.ListenAndServe(":80", r))
 }
