@@ -1,0 +1,57 @@
+version: "3"
+
+env:
+  MAIN_MODULE: "cmd/main.go"
+  DOCKER_NAME: "net-playground"
+  BIN_DIR: '$PWD/.bin'
+
+tasks:
+  # === Сборка ===
+  build-docker-image:
+    cmd: docker build . -t {{.DOCKER_NAME}}
+
+  # === Локальная разработка ===
+  create-env:
+    cmd: cp env-example .env
+
+  run:
+    cmd: "(export $(grep -v '^#' .env | xargs) && go run {{.MAIN_MODULE}})"
+
+  run-image:
+    cmd: docker run -p 8080:8080 -e HTTP_SERVER_HOST_PORT=0.0.0.0:8080 {{.DOCKER_NAME}}:latest
+
+  run-image-v2:
+    deps:
+      - create-env
+    cmd: docker run -p 8080:8080 --env-file .env {{.DOCKER_NAME}}:latest
+
+  # === Кодстайл ===
+  lint:
+    desc: "Запуск линтеров"
+    deps:
+      - install-deps
+    cmds:
+      - cmd: "{{.BIN_DIR}}/golangci-lint run --config=.golangci-lint.yml"
+
+  format:
+    desc: "Запуск форматтеров"
+    deps:
+      - install-deps
+    cmds:
+      - cmd: "find . -type f -name '*.go' -not -path './internal/pb/*' -not -path './vendor/*' -exec {{.BIN_DIR}}/goimports -l {} +"
+      - cmd: "find . -type f -name '*.go' -not -path './internal/pb/*' -not -path './vendor/*' -exec {{.BIN_DIR}}/gofumpt -l -w {} +"
+
+  style:
+    deps:
+      - lint
+      - format
+
+  # === Зависимости для локальной разработки ===
+  install-deps:
+    desc: "Установка инструментов Go (зависимостей) в каталог {{.BIN_DIR}}"
+    cmds:
+      - mkdir -p {{.BIN_DIR}}
+      - |
+        [ -f "{{.BIN_DIR}}/goimports" ] || { echo "goimports устанавливается..."; GOBIN={{.BIN_DIR}} go install golang.org/x/tools/cmd/goimports@latest; }
+        [ -f "{{.BIN_DIR}}/gofumpt" ] || { echo "gofumpt устанавливается..."; GOBIN={{.BIN_DIR}} go install mvdan.cc/gofumpt@latest; }
+        [ -f "{{.BIN_DIR}}/golangci-lint" ] || { echo "golangci-lint устанавливается..."; GOBIN={{.BIN_DIR}} go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest; }

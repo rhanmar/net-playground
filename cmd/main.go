@@ -1,12 +1,30 @@
 package main
 
 import (
-	"github.com/go-chi/chi/v5"
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
+
+func main() {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/server_error/", handlerServerError)
+	mux.HandleFunc("/echo/", handlerEcho)
+	mux.HandleFunc("/long/", handlerLong)
+	mux.HandleFunc("/user/", handlerUserInfo)
+	mux.HandleFunc("/", handlerHelloWorld)
+
+	socket := os.Getenv("HTTP_SERVER_HOST_PORT")
+
+	log.Printf("Listening on %s...", socket)
+	log.Fatal(http.ListenAndServe(socket, mux))
+}
+
+func handlerHelloWorld(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Hello, World!"))
+}
 
 func handlerServerError(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusInternalServerError)
@@ -33,13 +51,4 @@ func handlerEcho(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
-}
-
-func main() {
-	r := chi.NewRouter()
-	r.Get("/server_error/", handlerServerError)
-	r.Post("/echo/", handlerEcho)
-	r.Get("/long/", handlerLong)
-	r.Get("/user/", handlerUserInfo)
-	log.Fatal(http.ListenAndServe(":80", r))
 }
