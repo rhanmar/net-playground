@@ -1,54 +1,38 @@
 package main
 
 import (
-	"io"
+	"context"
 	"log"
 	"net/http"
-	"os"
-	"time"
+
+	"net-playground/internal/config"
+	dummyDB "net-playground/internal/db"
+	handlers "net-playground/internal/handlers/http"
+	dummyRepo "net-playground/internal/repositories/dummy"
+	dummySvc "net-playground/internal/services/dummy"
 )
 
 func main() {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/server_error/", handlerServerError)
-	mux.HandleFunc("/echo/", handlerEcho)
-	mux.HandleFunc("/long/", handlerLong)
-	mux.HandleFunc("/user/", handlerUserInfo)
-	mux.HandleFunc("/", handlerHelloWorld)
-
-	socket := os.Getenv("HTTP_SERVER_HOST_PORT")
-
-	log.Printf("Listening on %s...", socket)
-	log.Fatal(http.ListenAndServe(socket, mux))
-}
-
-func handlerHelloWorld(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Hello, World!"))
-}
-
-func handlerServerError(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusInternalServerError)
-	w.Write([]byte("Internal server error"))
-}
-
-func handlerLong(w http.ResponseWriter, r *http.Request) {
-	time.Sleep(2 * time.Second)
-	w.Write([]byte("Long answer"))
-}
-
-func handlerUserInfo(w http.ResponseWriter, r *http.Request) {
-	userAgent := r.Header.Get("User-Agent")
-	osName := r.Header.Get("Sec-Ch-Ua-Platform")
-	w.Write([]byte(userAgent + "\n" + osName))
-}
-
-func handlerEcho(w http.ResponseWriter, r *http.Request) {
-	body, err := io.ReadAll(r.Body)
+	ctx := context.Background()
+	cfg, err := config.InitConfig()
 	if err != nil {
-		http.Error(w, "Failed to read request body", http.StatusInternalServerError)
-		return
+		log.Fatal(err)
 	}
-	defer r.Body.Close()
-	w.WriteHeader(http.StatusOK)
-	w.Write(body)
+	db, err := dummyDB.NewDB(ctx, cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+	repo := dummyRepo.NewRepository(db)
+	service := dummySvc.NewService(repo)
+	httpHandlers := handlers.NewHandler(service)
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/server_error/", httpHandlers.HandlerServerError)
+	mux.HandleFunc("/echo/", httpHandlers.HandlerEcho)
+	mux.HandleFunc("/long/", httpHandlers.HandlerLong)
+	mux.HandleFunc("/user/", httpHandlers.SaveUser)
+	mux.HandleFunc("/", httpHandlers.HandlerHelloWorld)
+
+	log.Printf("Listening on %s...", cfg.GetHTTPServerHostPort())
+	log.Fatal(http.ListenAndServe(cfg.GetHTTPServerHostPort(), mux))
 }

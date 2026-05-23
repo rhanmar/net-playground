@@ -3,12 +3,17 @@ version: "3"
 env:
   MAIN_MODULE: "cmd/main.go"
   DOCKER_NAME: "net-playground"
-  BIN_DIR: '$PWD/.bin'
+  BIN_DIR: "$PWD/.bin"
+  GOOSE_DB_URL: "postgres://postgres:postgres@localhost:5432?sslmode=disable"
+  MIGRATIONS_DIR: "migrations/"
 
 tasks:
   # === Сборка ===
   build-docker-image:
     cmd: docker build . -t {{.DOCKER_NAME}}
+
+  build-docker-image-no-cache:
+    cmd: docker build . -t {{.DOCKER_NAME}} --no-cache
 
   # === Локальная разработка ===
   create-env:
@@ -21,9 +26,8 @@ tasks:
     cmd: docker run -p 8080:8080 -e HTTP_SERVER_HOST_PORT=0.0.0.0:8080 {{.DOCKER_NAME}}:latest
 
   run-image-v2:
-    deps:
-      - create-env
-    cmd: docker run -p 8080:8080 --env-file .env {{.DOCKER_NAME}}:latest
+    cmd: docker run -p 8080:8080 --env-file .env -e POSTGRES_DSN="postgres://postgres:postgres@dummy-db:5432?sslmode=disable" --net=net-playground_default {{.DOCKER_NAME}}:latest
+#    cmd: docker run -it -p 8080:8080 --env-file .env -e POSTGRES_DSN="postgres://postgres:postgres@dummy-db:5432?sslmode=disable" --net=net-playground_default {{.DOCKER_NAME}}:latest /bin/bash
 
   # === Кодстайл ===
   lint:
@@ -55,3 +59,29 @@ tasks:
         [ -f "{{.BIN_DIR}}/goimports" ] || { echo "goimports устанавливается..."; GOBIN={{.BIN_DIR}} go install golang.org/x/tools/cmd/goimports@latest; }
         [ -f "{{.BIN_DIR}}/gofumpt" ] || { echo "gofumpt устанавливается..."; GOBIN={{.BIN_DIR}} go install mvdan.cc/gofumpt@latest; }
         [ -f "{{.BIN_DIR}}/golangci-lint" ] || { echo "golangci-lint устанавливается..."; GOBIN={{.BIN_DIR}} go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest; }
+
+  # === Работа с БД ===
+  exec_db:
+    desc: "Запуск bash в контейнере БД"
+    cmds:
+      - docker exec -it iw-audit-db bash
+
+  migrations_create:
+    desc: "Создание нового файла миграции (использование: task migrations_create name=my-migration-name)"
+    cmds:
+      - goose create {{.name}} -dir {{.MIGRATIONS_DIR}} sql
+
+  migrations_status:
+    desc: "Просмотр статуса миграций"
+    cmds:
+      - goose postgres "{{.GOOSE_DB_URL}}" -dir {{.MIGRATIONS_DIR}} status
+
+  migrations_up:
+    desc: "Применение новых миграций"
+    cmds:
+      - goose postgres "{{.GOOSE_DB_URL}}" -dir {{.MIGRATIONS_DIR}} up
+
+  migrations_down:
+    desc: "Откат последней миграции"
+    cmds:
+      - goose postgres "{{.GOOSE_DB_URL}}" -dir {{.MIGRATIONS_DIR}} down
