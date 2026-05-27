@@ -6,6 +6,10 @@ import (
 	"net-playground/internal/domain/dto"
 )
 
+//go:generate mkdir -p mocks
+//go:generate minimock -i repo
+//-o ./mocks -s _mock.go
+
 type repo interface {
 	Save(ctx context.Context, data string) error
 	GetInfos(ctx context.Context) ([]*dto.GetDummyInfo, error)

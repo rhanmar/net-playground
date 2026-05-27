@@ -16,6 +16,9 @@ tasks:
     cmd: docker build . -t {{.DOCKER_NAME}} --no-cache
 
   # === Локальная разработка ===
+  test:
+    cmd: "go test ./..."
+
   create-env:
     cmd: cp env-example .env
 
@@ -49,8 +52,8 @@ tasks:
     deps:
       - install-deps
     cmds:
-      - cmd: "find . -type f -name '*.go' -not -path './internal/pb/*' -not -path './vendor/*' -exec {{.BIN_DIR}}/goimports -l {} +"
-      - cmd: "find . -type f -name '*.go' -not -path './internal/pb/*' -not -path './vendor/*' -exec {{.BIN_DIR}}/gofumpt -l -w {} +"
+      - cmd: "find . -type f -name '*.go' -not -path './internal/pb/*' -not -path './vendor/*' -not -path './mocks/*' -exec {{.BIN_DIR}}/goimports -l {} +"
+      - cmd: "find . -type f -name '*.go' -not -path './internal/pb/*' -not -path './vendor/*' -not -path './mocks/*' -exec {{.BIN_DIR}}/gofumpt -l -w {} +"
 
   style:
     deps:
