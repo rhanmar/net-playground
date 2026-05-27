@@ -1,9 +1,14 @@
 package dummy
 
-import "context"
+import (
+	"context"
+
+	"net-playground/internal/domain/dto"
+)
 
 type repo interface {
 	Save(ctx context.Context, data string) error
+	GetInfos(ctx context.Context) ([]*dto.GetDummyInfo, error)
 }
 
 type Service struct {
@@ -16,4 +21,8 @@ func NewService(repo repo) *Service {
 
 func (s *Service) Save(ctx context.Context, data string) error {
 	return s.repo.Save(ctx, data)
+}
+
+func (s *Service) GetInfos(ctx context.Context) ([]*dto.GetDummyInfo, error) {
+	return s.repo.GetInfos(ctx)
 }

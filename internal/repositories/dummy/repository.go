@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"net-playground/internal/domain/dto"
+
 	"github.com/pkg/errors"
 
 	"github.com/jackc/pgx/v5"
@@ -36,4 +38,46 @@ func (r *Repository) Save(ctx context.Context, data string) error {
 		return errors.Wrap(err, "db.Exec")
 	}
 	return nil
+}
+
+func (r *Repository) GetInfos(ctx context.Context) ([]*dto.GetDummyInfo, error) {
+	sql := "SELECT id, data FROM dummy"
+	rows, err := r.db.Query(ctx, sql)
+	if err != nil {
+		return nil, errors.Wrap(err, "db.Query")
+	}
+
+	var infosDB []getInfoDB
+	for rows.Next() {
+		var infoDB getInfoDB
+		err = rows.Scan(
+			&infoDB.ID,
+			&infoDB.Data,
+		)
+		if err != nil {
+			return nil, errors.Wrap(err, "rows.Scan")
+		}
+		infosDB = append(infosDB, infoDB)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, errors.Wrap(err, "rows.Err")
+	}
+
+	result := make([]*dto.GetDummyInfo, len(infosDB))
+	for _, infoDB := range infosDB {
+		result = append(result, infoDB.toDTO())
+	}
+	return result, nil
+}
+
+type getInfoDB struct {
+	ID   int64  `db:"id"`
+	Data string `db:"data"`
+}
+
+func (g *getInfoDB) toDTO() *dto.GetDummyInfo {
+	return &dto.GetDummyInfo{
+		ID:   g.ID,
+		Data: g.Data,
+	}
 }

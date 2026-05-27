@@ -2,13 +2,18 @@ package http
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"time"
+
+	"net-playground/internal/domain/dto"
 )
 
 type dummyService interface {
 	Save(ctx context.Context, data string) error
+	GetInfos(ctx context.Context) ([]*dto.GetDummyInfo, error)
 }
 
 type Handler struct {
@@ -30,6 +35,20 @@ func (h *Handler) SaveUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write([]byte(data))
+}
+
+func (h *Handler) GetDummyInfo(w http.ResponseWriter, r *http.Request) {
+	dummyInfos, err := h.service.GetInfos(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	fmt.Println(dummyInfos)
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(dummyInfos); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (h *Handler) HandlerEcho(w http.ResponseWriter, r *http.Request) {

@@ -31,6 +31,7 @@ func main() {
 	mux.HandleFunc("/echo/", httpHandlers.HandlerEcho)
 	mux.HandleFunc("/long/", httpHandlers.HandlerLong)
 	mux.HandleFunc("/user/", httpHandlers.SaveUser)
+	mux.HandleFunc("/users/", httpHandlers.GetDummyInfo)
 	mux.HandleFunc("/", httpHandlers.HandlerHelloWorld)
 
 	log.Printf("Listening on %s...", cfg.GetHTTPServerHostPort())
