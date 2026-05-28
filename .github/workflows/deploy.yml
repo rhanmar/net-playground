@@ -48,6 +48,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
           script: |
             docker stop $(docker ps -q)
             docker pull ${{ env.APP_IMAGE_NAME }}:latest
