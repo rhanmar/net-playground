@@ -49,6 +49,7 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            docker stop $(docker ps -q)
-            docker pull ${{ env.APP_IMAGE_NAME }}:latest
-            docker run ${{ env.APP_IMAGE_NAME }}:latest
+            whoami
+#            docker stop $(docker ps -q)
+#            docker pull ${{ env.APP_IMAGE_NAME }}:latest
+#            docker run ${{ env.APP_IMAGE_NAME }}:latest
