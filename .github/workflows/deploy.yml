@@ -12,7 +12,6 @@ env:
   HTTP_SERVER_HOST_PORT: ${{ secrets.HTTP_SERVER_HOST_PORT }}
   POSTGRES_DSN: ${{ secrets.POSTGRES_DSN }}
   MIGRATIONS_DIR: ${{ secrets.MIGRATIONS_DIR }}
-
   APP_IMAGE_NAME: rhanmar/net-playground
 
 jobs:
@@ -59,4 +58,10 @@ jobs:
           script: |
             docker stop $(docker ps -q)
             docker pull ${{ env.APP_IMAGE_NAME }}:latest
-            docker run ${{ env.APP_IMAGE_NAME }}:latest
+            docker run ${{ env.APP_IMAGE_NAME }}:latest \
+            -e POSTGRES_USER=${{ env.POSTGRES_USER }} \
+            -e POSTGRES_PASSWORD=${{ env.POSTGRES_PASSWORD }} \
+            -e POSTGRES_DB=${{ env.POSTGRES_DB }} \
+            -e HTTP_SERVER_HOST_PORT=${{ env.HTTP_SERVER_HOST_PORT }} \
+            -e POSTGRES_DSN=${{ env.POSTGRES_DSN }} \
+            -e MIGRATIONS_DIR=${{ env.MIGRATIONS_DIR }}
