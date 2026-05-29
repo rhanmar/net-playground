@@ -59,7 +59,6 @@ jobs:
             docker stop $(docker ps -q)
             docker pull ${{ env.APP_IMAGE_NAME }}:latest
             docker run \
-            -d \
             -e POSTGRES_USER=${{ env.POSTGRES_USER }} \
             -e POSTGRES_PASSWORD=${{ env.POSTGRES_PASSWORD }} \
             -e POSTGRES_DB=${{ env.POSTGRES_DB }} \
